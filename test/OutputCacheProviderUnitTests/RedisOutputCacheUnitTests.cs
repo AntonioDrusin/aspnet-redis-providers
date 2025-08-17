@@ -7,54 +7,63 @@ using System;
 using Xunit;
 using FakeItEasy;
 using System.Collections.Specialized;
+using System.Threading.Tasks;
 
 namespace Microsoft.Web.Redis.UnitTests
 {
+    public class CacheData
+    {
+    }
+
     public class RedisOutputCacheUnitTests
     {
         [Fact]
-        public void TryGet()
+        public async Task TryGet()
         {
             var fake = A.Fake<IOutputCacheConnection>();
-            A.CallTo(() => fake.Get("key1")).Returns(new ArgumentException("foo"));
-            RedisOutputCacheProvider cache = new RedisOutputCacheProvider();
-            cache.cache = fake;
-            var obj = cache.Get("key1");
-            Assert.IsType<ArgumentException>(obj);
+            A.CallTo(() => fake.GetAsync("key1"))
+                .Returns(new CacheData());
+            var cache = new RedisOutputCacheProvider { cache = fake };
+            
+            var obj = await cache.GetAsync("key1");
+            
+            Assert.IsType<CacheData>(obj);
         }
 
         [Fact]
         public void TryAdd()
         {
             var fake = A.Fake<IOutputCacheConnection>();
-            DateTime utcExpiry = DateTime.Now;
-            A.CallTo(() => fake.Add("key1", "object", utcExpiry)).Returns(new ArgumentException("foo"));
-            RedisOutputCacheProvider cache = new RedisOutputCacheProvider();
-            cache.cache = fake;
+            var utcExpiry = DateTime.Now;
+            A.CallTo(() => fake.AddAsync("key1", "object", utcExpiry)).Returns(new CacheData());
+            var cache = new RedisOutputCacheProvider { cache = fake };
+            
             var obj = cache.Add("key1", "object", utcExpiry);
-            Assert.IsType<ArgumentException>(obj);
+            
+            Assert.IsType<CacheData>(obj);
         }
+        
         [Fact]
         public void TrySet()
         {
             var fake = A.Fake<IOutputCacheConnection>();
-            A.CallTo(() => fake.Set("key1", "object", A<DateTime>.Ignored));
-            DateTime utcExpiry = DateTime.Now;
-            RedisOutputCacheProvider cache = new RedisOutputCacheProvider();
-            cache.cache = fake;
+            A.CallTo(() => fake.SetAsync("key1", "object", A<DateTime>.Ignored));
+            RedisOutputCacheProvider cache = new RedisOutputCacheProvider { cache = fake };
+            
             cache.Set("key1", "object", DateTime.Now);
-            A.CallTo(() => fake.Set("key1", "object", A<DateTime>.Ignored)).MustHaveHappened();
+            
+            A.CallTo(() => fake.SetAsync("key1", "object", A<DateTime>.Ignored)).MustHaveHappened();
         }
         [Fact]
         public void TryRemove()
         {
             var fake = A.Fake<IOutputCacheConnection>();
-            A.CallTo(() => fake.Remove("key1"));
-            DateTime utcExpiry = DateTime.Now;
-            RedisOutputCacheProvider cache = new RedisOutputCacheProvider();
-            cache.cache = fake;
+            A.CallTo(() => fake.RemoveAsync("key1"));
+            var cache = new RedisOutputCacheProvider { cache = fake };
+            
             cache.Remove("key1");
-            A.CallTo(() => fake.Remove("key1")).MustHaveHappened();
+            
+            A.CallTo(() => fake.RemoveAsync("key1")).MustHaveHappened();
         }
         [Fact]
         public void TryInitialize()

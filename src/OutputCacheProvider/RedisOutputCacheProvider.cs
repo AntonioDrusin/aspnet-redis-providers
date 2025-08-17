@@ -9,13 +9,12 @@ using System.Web.Caching;
 
 namespace Microsoft.Web.Redis
 {
-
     public class RedisOutputCacheProvider : OutputCacheProviderAsync
     {
         internal static ProviderConfiguration configuration;
         internal static object configurationCreationLock = new object();
         internal IOutputCacheConnection cache;
-        
+
         public override void Initialize(string name, System.Collections.Specialized.NameValueCollection config)
         {
             if (config == null)
@@ -33,8 +32,9 @@ namespace Microsoft.Web.Redis
                 config.Remove("description");
                 config.Add("description", "Redis as a session data store");
             }
+
             base.Initialize(name, config);
-            
+
             // If configuration exists then use it otherwise read from config file and create one
             if (configuration == null)
             {
@@ -50,48 +50,55 @@ namespace Microsoft.Web.Redis
 
         public override object Get(string key)
         {
-            try
-            {
-                GetAccessToCacheStore();
-                return cache.Get(key);
-            }
-            catch(Exception e)
-            {
-                LogUtility.LogError("Error in Get: " + e.Message);
-            }
-            return null;
+            return GetAsync(key).GetAwaiter().GetResult();
         }
 
         public override async Task<object> GetAsync(string key)
         {
-            return await Task.FromResult(Get(key));
+            try
+            {
+                GetAccessToCacheStore();
+                return await cache.GetAsync(key);
+            }
+            catch (Exception e)
+            {
+                LogUtility.LogError("Error in GetAsync: " + e.Message);
+            }
+
+            return null;
         }
 
         public override object Add(string key, object entry, DateTime utcExpiry)
         {
+            return AddAsync(key, entry, utcExpiry).GetAwaiter().GetResult();
+        }
+
+        public override async Task<object> AddAsync(string key, object entry, DateTime utcExpiry)
+        {
             try
             {
                 GetAccessToCacheStore();
-                return cache.Add(key, entry, utcExpiry);
+                return await cache.AddAsync(key, entry, utcExpiry);
             }
             catch (Exception e)
             {
                 LogUtility.LogError("Error in Add: " + e.Message);
             }
-            return null;
-        }
 
-        public override async Task<object> AddAsync(string key, object entry, DateTime utcExpiry)
-        {
-            return await Task.FromResult(Add(key, entry, utcExpiry));
+            return null;
         }
 
         public override void Set(string key, object entry, DateTime utcExpiry)
         {
+            SetAsync(key, entry, utcExpiry).GetAwaiter().GetResult();
+        }
+
+        public override async Task SetAsync(string key, object entry, DateTime utcExpiry)
+        {
             try
             {
                 GetAccessToCacheStore();
-                cache.Set(key, entry, utcExpiry);
+                await cache.SetAsync(key, entry, utcExpiry);
             }
             catch (Exception e)
             {
@@ -99,29 +106,22 @@ namespace Microsoft.Web.Redis
             }
         }
 
-        public override async Task SetAsync(string key, object entry, DateTime utcExpiry)
+        public override void Remove(string key)
         {
-            Set(key, entry, utcExpiry);
-            await Task.FromResult(0);
+            RemoveAsync(key).GetAwaiter().GetResult();
         }
 
-        public override void Remove(string key)
+        public override async Task RemoveAsync(string key)
         {
             try
             {
                 GetAccessToCacheStore();
-                cache.Remove(key);
+                await cache.RemoveAsync(key);
             }
             catch (Exception e)
             {
                 LogUtility.LogError("Error in Remove: " + e.Message);
             }
-        }
-
-        public override async Task RemoveAsync(string key)
-        {
-            Remove(key);
-            await Task.FromResult(0);
         }
 
         private void GetAccessToCacheStore()

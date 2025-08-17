@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Web.Caching;
 
 namespace Microsoft.Web.Redis
@@ -49,41 +50,41 @@ namespace Microsoft.Web.Redis
                     return retVal
                     ");
 
-        public object Add(string key, object entry, DateTime utcExpiry)
+        public async Task<object> AddAsync(string key, object entry, DateTime utcExpiry)
         {
             key = GetKeyForRedis(key);
-            TimeSpan expiryTime = utcExpiry - DateTime.UtcNow;
-            string[] keyArgs = new string[] { key };
-            object[] valueArgs = new object[] {
+            var expiryTime = utcExpiry - DateTime.UtcNow;
+            var keyArgs = new string[] { key };
+            var valueArgs = new object[] {
                 SerializeOutputCacheEntry(entry),
                 (long) expiryTime.TotalMilliseconds };
 
-            object rowDataFromRedis = redisConnection.Eval(addScript, keyArgs, valueArgs);
+            var rowDataFromRedis = await redisConnection.EvalAsync(addScript, keyArgs, valueArgs).ConfigureAwait(false);
             return DeserializeOutputCacheEntry((byte[])rowDataFromRedis);
         }
 
         /*-------End of Add operation-----------------------------------------------------------------------------------------------------------------------------------------------*/
 
-        public void Set(string key, object entry, DateTime utcExpiry)
+        public Task SetAsync(string key, object entry, DateTime utcExpiry)
         {
             key = GetKeyForRedis(key);
             byte[] data = SerializeOutputCacheEntry(entry);
 
-            redisConnection.Set(key, data, utcExpiry);
+            return redisConnection.SetAsync(key, data, utcExpiry);
         }
 
-        public object Get(string key)
+        public async Task<object> GetAsync(string key)
         {
             key = GetKeyForRedis(key);
 
-            byte[] data = redisConnection.Get(key);
+            var data = await redisConnection.GetAsync(key).ConfigureAwait(false);
             return DeserializeOutputCacheEntry(data);
         }
 
-        public void Remove(string key)
+        public Task RemoveAsync(string key)
         {
             key = GetKeyForRedis(key);
-            redisConnection.Remove(key);
+            return redisConnection.RemoveAsync(key);
         }
 
         private string GetKeyForRedis(string key)

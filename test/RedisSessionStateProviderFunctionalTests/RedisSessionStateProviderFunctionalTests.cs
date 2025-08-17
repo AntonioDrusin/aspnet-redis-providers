@@ -36,10 +36,10 @@ namespace Microsoft.Web.Redis.FunctionalTests
 
                 // Inserting empty session with "SessionStateActions.InitializeItem" flag into redis server
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None);
+                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None).ConfigureAwait(false);
 
                 // Get write lock and session from cache
-                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None);
+                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // Get actual connection and varify lock and session timeout
                 IDatabase actualConnection = GetRealRedisConnection();
@@ -50,14 +50,14 @@ namespace Microsoft.Web.Redis.FunctionalTests
                 data.Item.Items["key"] = "value";
 
                 // session update
-                await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None);
+                await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None).ConfigureAwait(false);
                 Assert.NotNull(actualConnection.StringGet(ssp.cache.Keys.DataKey));
 
-                // reset sessions timoue
-                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None);
+                // reset sessions time
+                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // End request
-                await ssp.EndRequestAsync(null);
+                await ssp.EndRequestAsync(null).ConfigureAwait(false);
 
                 // remove data and lock from redis
                 DisposeRedisConnectionWrapper();
@@ -73,21 +73,21 @@ namespace Microsoft.Web.Redis.FunctionalTests
 
                 // Inserting empty session with "SessionStateActions.InitializeItem" flag into redis server
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None);
+                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None).ConfigureAwait(false);
 
                 // Get write lock and session from cache
-                GetItemResult data = await ssp.GetItemAsync(null, sessionId, CancellationToken.None);
+                GetItemResult data = await ssp.GetItemAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // Get actual connection and varify lock and session timeout
                 IDatabase actualConnection = GetRealRedisConnection();
                 Assert.True(actualConnection.StringGet(ssp.cache.Keys.LockKey).IsNull);
                 Assert.Equal(((int)RedisSessionStateProvider.configuration.SessionTimeout.TotalSeconds).ToString(), actualConnection.StringGet(ssp.cache.Keys.InternalKey).ToString());
 
-                // reset sessions timoue
-                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None);
+                // reset sessions time
+                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // End request
-                await ssp.EndRequestAsync(null);
+                await ssp.EndRequestAsync(null).ConfigureAwait(false);
 
                 // remove data and lock from redis
                 DisposeRedisConnectionWrapper();
@@ -103,10 +103,10 @@ namespace Microsoft.Web.Redis.FunctionalTests
 
                 // Inserting empty session with "SessionStateActions.InitializeItem" flag into redis server
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None);
+                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None).ConfigureAwait(false);
 
                 // Get write lock and session from cache
-                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None);
+                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // Get actual connection and varify lock and session timeout
                 IDatabase actualConnection = GetRealRedisConnection();
@@ -118,17 +118,17 @@ namespace Microsoft.Web.Redis.FunctionalTests
                 data.Item.Timeout = 5;
 
                 // session update
-                await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None);
+                await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal("300", actualConnection.StringGet(ssp.cache.Keys.InternalKey).ToString());
 
-                // reset sessions timoue
-                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None);
+                // reset sessions time
+                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // End request
-                await ssp.EndRequestAsync(null);
+                await ssp.EndRequestAsync(null).ConfigureAwait(false);
 
                 // Verify that GetItemExclusive returns timeout from redis
-                GetItemResult data_1 = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None);
+                GetItemResult data_1 = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
                 Assert.Equal(5, data.Item.Timeout);
 
                 // remove data and lock from redis
@@ -143,7 +143,7 @@ namespace Microsoft.Web.Redis.FunctionalTests
             {
                 string sessionId = ResetRedisConnectionWrapperAndConfiguration();
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.ReleaseItemExclusiveAsync(null, sessionId, null, CancellationToken.None);
+                await ssp.ReleaseItemExclusiveAsync(null, sessionId, null, CancellationToken.None).ConfigureAwait(false);
                 DisposeRedisConnectionWrapper();
             }
         }
@@ -155,7 +155,7 @@ namespace Microsoft.Web.Redis.FunctionalTests
             {
                 string sessionId = ResetRedisConnectionWrapperAndConfiguration();
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.RemoveItemAsync(null, sessionId, null, null, CancellationToken.None);
+                await ssp.RemoveItemAsync(null, sessionId, null, null, CancellationToken.None).ConfigureAwait(false);
                 DisposeRedisConnectionWrapper();
             }
         }
@@ -175,10 +175,10 @@ namespace Microsoft.Web.Redis.FunctionalTests
 
                 // Inserting empty session with "SessionStateActions.InitializeItem" flag into redis server
                 RedisSessionStateProvider ssp = new RedisSessionStateProvider();
-                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None);
+                await ssp.CreateUninitializedItemAsync(null, sessionId, (int)RedisSessionStateProvider.configuration.SessionTimeout.TotalMinutes, CancellationToken.None).ConfigureAwait(false);
 
                 // Get write lock and session from cache
-                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None);
+                GetItemResult data = await ssp.GetItemExclusiveAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // Get actual connection and varify lock and session timeout
                 IDatabase actualConnection = GetRealRedisConnection();
@@ -194,7 +194,7 @@ namespace Microsoft.Web.Redis.FunctionalTests
                     data.Item.Items["key" + i.ToString()] = "value" + i.ToString();
 
                     // session update
-                    await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None);
+                    await ssp.SetAndReleaseItemExclusiveAsync(null, sessionId, data.Item, data.LockId, false, CancellationToken.None).ConfigureAwait(false);
                 }
 
                 for (int i = 0; i < 10000; i++)
@@ -207,11 +207,11 @@ namespace Microsoft.Web.Redis.FunctionalTests
 
                 Console.WriteLine($"Execution Time: {watch.ElapsedMilliseconds} ms");
 
-                // reset sessions timoue
-                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None);
+                // reset sessions time
+                await ssp.ResetItemTimeoutAsync(null, sessionId, CancellationToken.None).ConfigureAwait(false);
 
                 // End request
-                await ssp.EndRequestAsync(null);
+                await ssp.EndRequestAsync(null).ConfigureAwait(false);
 
                 // remove data and lock from redis
                 DisposeRedisConnectionWrapper();
